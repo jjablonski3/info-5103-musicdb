@@ -29,6 +29,18 @@ const addMember = async ( membername, passwordHash, email  ) => {
     }
 };
 
+const searchSongByText = async(songname) => {
+    const query = {
+        text: `SELECT * FROM track where LOWER(song_name) like LOWER('%${songname}%')`
+    };
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
 module.exports = {
     addMember,
+    searchSongByText
 };
