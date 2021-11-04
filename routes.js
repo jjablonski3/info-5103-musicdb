@@ -4,6 +4,7 @@ const dbRtns = require("./dbroutines");
 const jwt = require("jsonwebtoken");
 var axios = require("axios").default;
 const fs = require('fs');
+const{ pubkey } = require("./config");
 
 //create login token
 router.post("/login", async (req, res) => {
@@ -78,7 +79,7 @@ router.get("/sba", async (req, res) => {
             headers: {
               'content-type': 'text/plain',
               'x-rapidapi-host': 'shazam.p.rapidapi.com',
-              'x-rapidapi-key': 'a1986d37f8msha94f40e5c9486b9p11983cjsn9270b926a083'
+              'x-rapidapi-key': `${pubkey}`
             },
             data: fileContents
           };
@@ -106,7 +107,7 @@ router.get("/id", async (req, res) => {
             params: {q: 'Kendrick Lamar'},
             headers: {
               'x-rapidapi-host': 'genius.p.rapidapi.com',
-              'x-rapidapi-key': 'a1986d37f8msha94f40e5c9486b9p11983cjsn9270b926a083'
+              'x-rapidapi-key': `${pubkey}`
             }
           };
           
@@ -134,7 +135,7 @@ router.get("/lyrics", async (req, res) => {
             //url: `https://genius.p.rapidapi.com/songs/${artistid}`,
             headers: {
               'x-rapidapi-host': 'genius.p.rapidapi.com',
-              'x-rapidapi-key': 'a1986d37f8msha94f40e5c9486b9p11983cjsn9270b926a083'
+              'x-rapidapi-key': `${pubkey}`
             }
           };
           

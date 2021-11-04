@@ -5,4 +5,5 @@ module.exports = {
   dburl: process.env.HOST,
   database: process.env.DB,
   authorization: process.env.PASSWORD,
+  pubkey: process.env.APIKEY
 };
