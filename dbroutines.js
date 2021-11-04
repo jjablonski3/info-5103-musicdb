@@ -1,3 +1,4 @@
+const e = require("express");
 const { Pool } = require("pg");
 const { username, dburl, database, authorization } = require("./config");
 const port = 5432;
@@ -18,7 +19,7 @@ const pool = new Pool({
 //adds a new member login to the member table. Name and email must be unique
 const addMember = async ( membername, passwordHash, email  ) => {
     const query = {
-        text: `INSERT INTO members ( membername, password, email)
+        text: `INSERT INTO member ( membername, password, email)
                 VALUES ( '${membername}', '${passwordHash}', '${email}' )`
     };
     try {
@@ -40,7 +41,26 @@ const searchSongByText = async(songname) => {
         console.log(err);
     }
 };
+
+const getMember = async (membername) => {
+    const query = {
+        text: `SELECT * 
+               FROM member
+               WHERE membername = '${membername}'`
+    };
+    try {
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
+
 module.exports = {
     addMember,
+    getMember,
     searchSongByText
+
 };
+
+
