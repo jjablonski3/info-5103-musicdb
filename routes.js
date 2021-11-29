@@ -4,7 +4,7 @@ const dbRtns = require("./dbroutines");
 const jwt = require("jsonwebtoken");
 var axios = require("axios").default;
 const fs = require('fs');
-const{ pubkey } = require("./config");
+const { pubkey } = require("./config");
 const bcrypt = require('bcrypt');
 //for the bcrypt hash
 const saltRounds = 10;
@@ -19,19 +19,18 @@ router.post("/login", async (req, res) => {
         console.log(memRes.rows[0].member_id);
         let mem = memRes.rows[0];
         let memberMatch = await bcrypt.compare(req.body.pass, mem.password);
-        if(memberMatch)
-        {
+        if (memberMatch) {
             //generate the member token, attatch to json obj, and return
             let token = jwt.sign(mem, process.env.ACCESS_TOKEN_SECRET)
             let resObj = {
                 name: mem.name,
                 email: mem.email,
-                accessToken = token
+                accessToken: token
             }
             res.status(200).send({ member: resObj });
         }
-        else{
-            res.status(500).send({message: "Invalid Credentials"});
+        else {
+            res.status(500).send({ message: "Invalid Credentials" });
         }
 
     } catch (err) {
@@ -50,10 +49,10 @@ router.post("/register", async (req, res) => {
         let memExistsRes = await dbRtns.getMember(req.body.name);
         console.log(memExistsRes);
         console.log(memExistsRes.rowCount);
-        if(memExistsRes.rowCount != 0){
-           console.log("A member with that name already exists");
-           res.status(500).send("A member with that name already exists");
-           return;
+        if (memExistsRes.rowCount != 0) {
+            console.log("A member with that name already exists");
+            res.status(500).send("A member with that name already exists");
+            return;
         }
 
         let passwordHash = await bcrypt.hash(req.body.pass, saltRounds);
@@ -87,8 +86,8 @@ router.get("/sbt/:songname", async (req, res) => {
         let songtofind = req.params.songname;
         let results = await dbRtns.searchSongByText(songtofind);
         let rows = results.rows;
-        
-        res.status(200).send({ rows : rows });
+
+        res.status(200).send({ rows: rows });
     } catch (err) {
         console.log(err.stack);
         res.status(500).send("search failed - internal server error");
@@ -99,28 +98,28 @@ router.get("/sbt/:songname", async (req, res) => {
 router.get("/sba", async (req, res) => {
     try {
         //const fileContents = fs.readFileSync(inputRawFile);
-        const filename =  "C:/Users/rmcna/Downloads/testify.raw"
+        const filename = "C:/Users/rmcna/Downloads/testify.raw"
         let fileContents = fs.readFileSync(filename).toString('base64');
         //console.log(fileData);
         var options = {
             method: 'POST',
             url: 'https://shazam.p.rapidapi.com/songs/detect',
-            params: {timezone: 'America/Chicago', locale: 'en-US'},
+            params: { timezone: 'America/Chicago', locale: 'en-US' },
             headers: {
-              'content-type': 'text/plain',
-              'x-rapidapi-host': 'shazam.p.rapidapi.com',
-              'x-rapidapi-key': `${pubkey}`
+                'content-type': 'text/plain',
+                'x-rapidapi-host': 'shazam.p.rapidapi.com',
+                'x-rapidapi-key': `${pubkey}`
             },
             data: fileContents
-          };
-          let results;
-          axios.request(options).then(function (response) {
-              console.log(response.data);
-              results = response.data;
-              res.status(200).send({results:results})
-            }).catch(function (error) {
-              console.error(error);
-          });
+        };
+        let results;
+        axios.request(options).then(function (response) {
+            console.log(response.data);
+            results = response.data;
+            res.status(200).send({ results: results })
+        }).catch(function (error) {
+            console.error(error);
+        });
     } catch (err) {
         console.log(err.stack);
         res.status(500).send("search failed - internal server error");
@@ -134,21 +133,21 @@ router.get("/id", async (req, res) => {
         var options = {
             method: 'GET',
             url: 'https://genius.p.rapidapi.com/search',
-            params: {q: 'Kendrick Lamar'},
+            params: { q: 'Kendrick Lamar' },
             headers: {
-              'x-rapidapi-host': 'genius.p.rapidapi.com',
-              'x-rapidapi-key': `${pubkey}`
+                'x-rapidapi-host': 'genius.p.rapidapi.com',
+                'x-rapidapi-key': `${pubkey}`
             }
-          };
-          
-          let results;
-          axios.request(options).then(function (response) {
-              console.log(response.data.response.hits[0].result.api_path);//.response.hits.result.api_path);
-              results = response.data.response.hits[0].result.api_path;//.response.hits.result.api_path);
-              res.status(200).send({results:results})
-          }).catch(function (error) {
-              console.error(error);
-          });
+        };
+
+        let results;
+        axios.request(options).then(function (response) {
+            console.log(response.data.response.hits[0].result.api_path);//.response.hits.result.api_path);
+            results = response.data.response.hits[0].result.api_path;//.response.hits.result.api_path);
+            res.status(200).send({ results: results })
+        }).catch(function (error) {
+            console.error(error);
+        });
     } catch (err) {
         console.log(err.stack);
         res.status(500).send("search failed - internal server error");
@@ -164,16 +163,16 @@ router.get("/lyrics", async (req, res) => {
             url: 'https://genius.p.rapidapi.com/songs/378195',
             //url: `https://genius.p.rapidapi.com/songs/${artistid}`,
             headers: {
-              'x-rapidapi-host': 'genius.p.rapidapi.com',
-              'x-rapidapi-key': `${pubkey}`
+                'x-rapidapi-host': 'genius.p.rapidapi.com',
+                'x-rapidapi-key': `${pubkey}`
             }
-          };
-          
-          axios.request(options).then(function (response) {
-              console.log(response.data);
-          }).catch(function (error) {
-              console.error(error);
-          });
+        };
+
+        axios.request(options).then(function (response) {
+            console.log(response.data);
+        }).catch(function (error) {
+            console.error(error);
+        });
     } catch (err) {
         console.log(err.stack);
         res.status(500).send("search failed - internal server error");
