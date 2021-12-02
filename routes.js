@@ -19,8 +19,7 @@ router.post("/login", async (req, res) => {
         console.log(memRes.rows[0].member_id);
         let mem = memRes.rows[0];
         let memberMatch = await bcrypt.compare(req.body.pass, mem.password);
-        if(memberMatch)
-        {
+        if(memberMatch) {
             //generate the member token, attatch to json obj, and return
             let token = jwt.sign(mem, process.env.ACCESS_TOKEN_SECRET)
             let resObj = {
@@ -81,6 +80,20 @@ router.get("/member", async (req, res) => {
     }
 });
 
+//update email
+router.get("/updatepw", async(req,res) =>{
+    try{
+        let passwordHash = await bcrypt.hash(req.body.password, saltRounds);
+        let membername = req.body.membername;
+        let results = await dbRtns.updatePassword(membername, passwordHash);
+        let rows = results.rows;
+        res.status(200).send({ rows : rows });
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).send("search failed - internal server error");
+    }
+});
+
 //search by text
 router.get("/sbt/:songname", async (req, res) => {
     try {
@@ -127,14 +140,14 @@ router.get("/sba", async (req, res) => {
     }
 });
 
-
 //search by lyrics
-router.get("/id", async (req, res) => {
+router.get("/lyrics", async (req, res) => {
     try {
+        let song = req.body.song;
         var options = {
             method: 'GET',
             url: 'https://genius.p.rapidapi.com/search',
-            params: {q: 'Kendrick Lamar'},
+            params: {q: song},
             headers: {
               'x-rapidapi-host': 'genius.p.rapidapi.com',
               'x-rapidapi-key': `${pubkey}`
@@ -143,8 +156,7 @@ router.get("/id", async (req, res) => {
           
           let results;
           axios.request(options).then(function (response) {
-              console.log(response.data.response.hits[0].result.api_path);//.response.hits.result.api_path);
-              results = response.data.response.hits[0].result.api_path;//.response.hits.result.api_path);
+              results = (response.data.response.hits[0].result.url);
               res.status(200).send({results:results})
           }).catch(function (error) {
               console.error(error);
@@ -155,30 +167,18 @@ router.get("/id", async (req, res) => {
     }
 });
 
-router.get("/lyrics", async (req, res) => {
-    try {
-        let artistid = req.params.id;
-
-        var options = {
-            method: 'GET',
-            url: 'https://genius.p.rapidapi.com/songs/378195',
-            //url: `https://genius.p.rapidapi.com/songs/${artistid}`,
-            headers: {
-              'x-rapidapi-host': 'genius.p.rapidapi.com',
-              'x-rapidapi-key': `${pubkey}`
-            }
-          };
-          
-          axios.request(options).then(function (response) {
-              console.log(response.data);
-          }).catch(function (error) {
-              console.error(error);
-          });
+router.get("/randomsong", async(req,res) =>{
+    try{
+        let results = await dbRtns.getRandomSong();
+        let rows = results.rows;
+        res.status(200).send({ rows : rows });
     } catch (err) {
         console.log(err.stack);
-        res.status(500).send("search failed - internal server error");
+        res.status(500).send("song retrieval failed - internal server error");
     }
 });
+
+
 
 
 module.exports = router;
