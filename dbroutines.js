@@ -121,8 +121,28 @@ const getRandomSong = async() => {
     } catch (err) {
         console.log(err);
     }
-
 };
+
+//returns artist, albums and songs for graphic
+const getArtistAlbumsAndSongs = async(artist) => {
+    const query = {
+        text: `SELECT song_name, al.album, ar.artist
+                FROM TRACK t
+                INNER JOIN ALBUM al
+                ON t.album_id = al.album_id
+                INNER JOIN ARTISTS ar
+                on t.artist_id = ar.artist_ids
+                WHERE LOWER(ar.artist) = LOWER('${artist}');
+                `
+    };
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
+
 module.exports = {
     addMember,
     getMember,
@@ -130,7 +150,8 @@ module.exports = {
     getRandomSong,
     getMemberInfo,
     updateMemberEmail,
-    updatePassword
+    updatePassword,
+    getArtistAlbumsAndSongs
 };
 
 

@@ -25,7 +25,7 @@ router.post("/login", async (req, res) => {
             let resObj = {
                 name: mem.name,
                 email: mem.email,
-                accessToken = token
+                accessToken: token
             }
             res.status(200).send({ member: resObj });
         }
@@ -167,6 +167,7 @@ router.get("/lyrics", async (req, res) => {
     }
 });
 
+//returns a random song (not specific to user taste)
 router.get("/randomsong", async(req,res) =>{
     try{
         let results = await dbRtns.getRandomSong();
@@ -178,7 +179,52 @@ router.get("/randomsong", async(req,res) =>{
     }
 });
 
+//returns json info for graph visualization
+router.get("/graph", async(req, res) =>{
+    try{
+        let artist = 'Rage Against the Machine'; //req.artist
+        //db query results
+        let results = [];
+        results = await dbRtns.getArtistAlbumsAndSongs(artist);
+        results = results.rows; //parse info
+        let songs = [];
+        let albums = [];
+        let artist_name = results[0].artist;    //top node
+        //parse returned json into song and album for graph json
+        results.forEach(element => {
+            songs.push({song:element.song_name, album:element.album});
+            albums.push(element.album);
+        });
+        let unique_albums = Array.from(new Set(albums));//remove duplicate albums
 
+        //graph array for json data
+        let elements = {nodes:[], edges:[]};
+        
+        //add artist as root
+        elements.nodes.push({id: artist_name, root: true});
+
+        //add albums nodes and create artist-album edge
+        unique_albums.forEach(element =>{
+            elements.nodes.push({id: `${element}.`, type: "Album"})
+            elements.edges.push({source: artist_name, target:`${element}.`, caption: "WROTE"})
+        });
+
+        //add song nodes and create song-album edge
+        songs.forEach(element =>{
+            elements.nodes.push({id: element.song, type: "Song"});
+            elements.edges.push({ source: `${element.song}`, target: `${element.album}.`, caption: "APPEARS_ON"})
+        });
+
+        let json = JSON.stringify(elements);
+
+        res.status(200).send(json);    
+    }catch (err) {
+        console.log(err.stack);
+        res.status(500).send("Graph creation failed - internal server error");
+    }
+});
+
+//get user generated song meaning
 
 
 module.exports = router;
