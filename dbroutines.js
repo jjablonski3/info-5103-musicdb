@@ -30,17 +30,50 @@ const addMember = async ( membername, passwordHash, email  ) => {
     }
 };
 
-const searchSongByText = async(songname) => {
+//get member information
+const getMemberInfo = async (membername) => {
     const query = {
-        text: `SELECT * FROM track where LOWER(song_name) like LOWER('%${songname}%')`
-    };
+        text: `SELECT member_id, membername, email
+                FROM member
+                WHERE member_id = ${membername}`
+    }
     try{
         let results = await pool.query(query);
         return results;
-    } catch (err) {
-        console.log(err);
+    }catch (err) {
+        return(err);
     }
 };
+
+//update member email
+const updateMemberEmail = async(membername, email) =>{
+    const query = {
+        text: `UPDATE member
+            SET email = ${email}
+            WHERE membername = ${membername} `
+    }
+    try{
+        let results = await pool.query(query);
+        return results;
+    }catch (err) {
+        return(err);
+    }
+}
+
+//update member password
+const updatePassword = async(membername, password) =>{
+    const query = {
+        text: `UPDATE member
+            SET password = ${password}
+            WHERE membername = ${membername} `
+    }
+    try{
+        let results = await pool.query(query);
+        return results;
+    }catch (err) {
+        return(err);
+    }
+}
 
 const getMember = async (membername) => {
     const query = {
@@ -56,11 +89,69 @@ const getMember = async (membername) => {
     }
 };
 
+
+//search for songs by text
+const searchSongByText = async(songname) => {
+    const query = {
+        text: `SELECT * FROM track where LOWER(song_name) like LOWER('%${songname}%')`
+    };
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+//get a random song from database
+const getRandomSong = async() => {
+    const query = {
+        text: `SELECT id, song_name, al.album, ar.artist
+                FROM TRACK t
+                INNER JOIN ALBUM al
+                ON t.album_id = al.album_id
+                INNER JOIN ARTISTS ar
+                on t.artist_id = ar.artist_ids
+                ORDER BY random()
+                LIMIT 1`
+    };
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+//returns artist, albums and songs for graphic
+const getArtistAlbumsAndSongs = async(artist) => {
+    const query = {
+        text: `SELECT song_name, al.album, ar.artist
+                FROM TRACK t
+                INNER JOIN ALBUM al
+                ON t.album_id = al.album_id
+                INNER JOIN ARTISTS ar
+                on t.artist_id = ar.artist_ids
+                WHERE LOWER(ar.artist) = LOWER('${artist}');
+                `
+    };
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
+
 module.exports = {
     addMember,
     getMember,
-    searchSongByText
-
+    searchSongByText,
+    getRandomSong,
+    getMemberInfo,
+    updateMemberEmail,
+    updatePassword,
+    getArtistAlbumsAndSongs
 };
 
 

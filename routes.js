@@ -80,6 +80,20 @@ router.get("/member", async (req, res) => {
     }
 });
 
+//update email
+router.get("/updatepw", async(req,res) =>{
+    try{
+        let passwordHash = await bcrypt.hash(req.body.password, saltRounds);
+        let membername = req.body.membername;
+        let results = await dbRtns.updatePassword(membername, passwordHash);
+        let rows = results.rows;
+        res.status(200).send({ rows : rows });
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).send("search failed - internal server error");
+    }
+});
+
 //search by text
 router.get("/sbt/:songname", async (req, res) => {
     try {
@@ -126,58 +140,91 @@ router.get("/sba", async (req, res) => {
     }
 });
 
-
 //search by lyrics
-router.get("/id", async (req, res) => {
+router.get("/lyrics", async (req, res) => {
     try {
+        let song = req.body.song;
         var options = {
             method: 'GET',
             url: 'https://genius.p.rapidapi.com/search',
-            params: { q: 'Kendrick Lamar' },
+            params: {q: song},
             headers: {
                 'x-rapidapi-host': 'genius.p.rapidapi.com',
                 'x-rapidapi-key': `${pubkey}`
             }
-        };
-
-        let results;
-        axios.request(options).then(function (response) {
-            console.log(response.data.response.hits[0].result.api_path);//.response.hits.result.api_path);
-            results = response.data.response.hits[0].result.api_path;//.response.hits.result.api_path);
-            res.status(200).send({ results: results })
-        }).catch(function (error) {
-            console.error(error);
-        });
+          };
+          
+          let results;
+          axios.request(options).then(function (response) {
+              results = (response.data.response.hits[0].result.url);
+              res.status(200).send({results:results})
+          }).catch(function (error) {
+              console.error(error);
+          });
     } catch (err) {
         console.log(err.stack);
         res.status(500).send("search failed - internal server error");
     }
 });
 
-router.get("/lyrics", async (req, res) => {
-    try {
-        let artistid = req.params.id;
-
-        var options = {
-            method: 'GET',
-            url: 'https://genius.p.rapidapi.com/songs/378195',
-            //url: `https://genius.p.rapidapi.com/songs/${artistid}`,
-            headers: {
-                'x-rapidapi-host': 'genius.p.rapidapi.com',
-                'x-rapidapi-key': `${pubkey}`
-            }
-        };
-
-        axios.request(options).then(function (response) {
-            console.log(response.data);
-        }).catch(function (error) {
-            console.error(error);
-        });
+//returns a random song (not specific to user taste)
+router.get("/randomsong", async(req,res) =>{
+    try{
+        let results = await dbRtns.getRandomSong();
+        let rows = results.rows;
+        res.status(200).send({ rows : rows });
     } catch (err) {
         console.log(err.stack);
-        res.status(500).send("search failed - internal server error");
+        res.status(500).send("song retrieval failed - internal server error");
     }
 });
+
+//returns json info for graph visualization
+router.get("/graph", async(req, res) =>{
+    try{
+        let artist = 'Rage Against the Machine'; //req.artist
+        //db query results
+        let results = [];
+        results = await dbRtns.getArtistAlbumsAndSongs(artist);
+        results = results.rows; //parse info
+        let songs = [];
+        let albums = [];
+        let artist_name = results[0].artist;    //top node
+        //parse returned json into song and album for graph json
+        results.forEach(element => {
+            songs.push({song:element.song_name, album:element.album});
+            albums.push(element.album);
+        });
+        let unique_albums = Array.from(new Set(albums));//remove duplicate albums
+
+        //graph array for json data
+        let elements = {nodes:[], edges:[]};
+        
+        //add artist as root
+        elements.nodes.push({id: artist_name, root: true});
+
+        //add albums nodes and create artist-album edge
+        unique_albums.forEach(element =>{
+            elements.nodes.push({id: `${element}.`, type: "Album"})
+            elements.edges.push({source: artist_name, target:`${element}.`, caption: "WROTE"})
+        });
+
+        //add song nodes and create song-album edge
+        songs.forEach(element =>{
+            elements.nodes.push({id: element.song, type: "Song"});
+            elements.edges.push({ source: `${element.song}`, target: `${element.album}.`, caption: "APPEARS_ON"})
+        });
+
+        let json = JSON.stringify(elements);
+
+        res.status(200).send(json);    
+    }catch (err) {
+        console.log(err.stack);
+        res.status(500).send("Graph creation failed - internal server error");
+    }
+});
+
+//get user generated song meaning
 
 
 module.exports = router;
