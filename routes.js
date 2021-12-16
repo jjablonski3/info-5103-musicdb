@@ -408,5 +408,31 @@ router.get("/getalbumartwork", async(req,res) =>{
 });
 
 
+//get song facts
+router.get("/songfacts", async(req,res) =>{
+    try{
+        let song = req.body.songname;
+        let results = await dbRtns.getSongFacts(song);
+        let rows = results.rows;
+        res.status(200).send({ rows : rows });
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).send("song fact retrieval failed - internal server error");
+    }
+});
+
+router.get("/recommendedsong", async(req,res) =>{
+    try{
+        let catKeyword = req.body.keyword;
+        let results = await dbRtns.getRecommendedSong(catKeyword);
+        let rows = results.rows;
+        console.log(rows);
+        res.status(200).send({ rows : rows });
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).send("recommended song retrieval failed - internal server error");
+    }
+});
+
 
 module.exports = router;

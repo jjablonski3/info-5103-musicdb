@@ -232,6 +232,55 @@ const getFavArtwork = async(member_id)=>{
     }
 };
 
+const getSongFacts = async(songname) => {
+    console.log(songname);
+    const query = {
+        text: `
+        WITH TracksWithRanks AS (
+            SELECT *, DENSE_RANK() OVER( ORDER BY t.danceability DESC) AS dance_rank,
+            NTILE(100) OVER( ORDER BY t.danceability DESC) AS dance_percentile,
+            DENSE_RANK() OVER( ORDER BY t.energy DESC) AS energy_rank,
+            NTILE(100) OVER( ORDER BY t.energy DESC) AS energy_percentile,
+            DENSE_RANK() OVER( ORDER BY t.instrumentalness DESC) AS instr_rank,
+            NTILE(100) OVER( ORDER BY t.instrumentalness DESC) AS instr_percentile,
+            DENSE_RANK() OVER( ORDER BY t.tempo DESC) AS tempo_rank,
+            NTILE(100) OVER( ORDER BY t.tempo DESC) AS tempo_percentile,
+            DENSE_RANK() OVER( ORDER BY t.loudness DESC) AS loud_rank,
+            NTILE(100) OVER( ORDER BY t.loudness DESC) AS loud_percentile,
+            DENSE_RANK() OVER( ORDER BY t.valence DESC) AS valence_rank,
+            NTILE(100) OVER( ORDER BY t.valence DESC) AS valence_percentile
+            FROM track t
+        )
+        SELECT * FROM TracksWithRanks twr WHERE Lower(twr.name) LIKE LOWER('%${songname}%');
+        `
+    };
+
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+const getRecommendedSong = async(keyword) => {
+    const query = {
+        text: `WITH TrackPercentiles AS (
+            SELECT *, 
+            NTILE(100) OVER( ORDER BY t.${keyword} DESC) AS percentile
+            FROM track t
+        )
+        SELECT * FROM TrackPercentiles twr WHERE twr.percentile > 94
+        ORDER BY random() LIMIT 1`
+    };
+
+    try{
+        let results = await pool.query(query);
+        return results;
+    } catch (err) {
+        console.log(err);
+    }
+};
 
 
 module.exports = {
