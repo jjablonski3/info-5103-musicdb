@@ -12,6 +12,7 @@ const saltRounds = 10;
 let cytoscape = require('cytoscape');
 let klay = require('cytoscape-klay');
 cytoscape.use(klay);
+let cytosnap = require('cytosnap');
 
 //create login token
 router.post("/login", async (req, res) => {
@@ -195,7 +196,7 @@ router.get("/graph", async(req, res) =>{
         let artist_name = results[0].artist;    //top node
         //parse returned json into song and album for graph json
         results.forEach(element => {
-            songs.push({song:element.song_name, album:element.album});
+            songs.push({song:element.name, album:element.album});
             albums.push(element.album);
         });
         let unique_albums = Array.from(new Set(albums));//remove duplicate albums
@@ -296,14 +297,7 @@ router.get("/graph", async(req, res) =>{
             priority: function( edge ){ return null; }, // Edges with a non-nil value are skipped when greedy edge cycle breaking is enabled
           };
         cy.layout(options).run();
-
-        cy.nodes().map((node, id) => {
-            console.log(id);
-            console.log(node._private.data);
-        });
-        
-      
-        res.status(200).send(cy.png());    
+        res.status(200).send(cy.png());
     }catch (err) {
         console.log(err.stack);
         res.status(500).send("Graph creation failed - internal server error");
@@ -311,6 +305,76 @@ router.get("/graph", async(req, res) =>{
 });
 
 //get user generated song meaning
+
+
+
+
+
+//add favourite song
+router.post("/addfavsong", async(req, res) =>{
+    try{
+        let song = req.body.song;
+        let artist = req.body.artist;
+        let member_id = req.body.id;
+        let song_id = await dbRtns.getSongID(song, artist);
+        let results = await dbRtns.addFavouriteSong(song_id, member_id);
+        res.status(200).send({msg: 'Added song!'})
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).send({err:"add song failed - internal server error"});
+    }
+});
+
+
+//get list of favourite songs
+router.get("/getfavsongs", async(req,res) =>{
+    try{
+        let member_id = req.body.id;
+        let song_list = await dbRtns.getFavSongList(member_id);
+        console.log(song_list.rows);
+        res.status(200).send({song_list: song_list.rows});
+    }catch (err) {
+        console.log(err.stack);
+        res.status(500).send({err:"get list failed - internal server error"});
+    }
+});
+
+
+//save favourite album artiwork
+router.get("/addalbumartwork", async(req, res) =>{
+    try{
+        //test data
+        //let album = 'Rage Against the Machine'
+        //let contents = fs.readFileSync('test.png', {encoding:'base64'});
+        //get album id
+        let album = req.body.album;        
+        let album_id = await dbRtns.getAlbumId(album);
+        
+        let album_b64 = req.body.album_b64;
+        let member_id = req.body.id;
+        let results = await dbRtns.addFavouriteArtwork(album_b64, album_id, member_id);
+        //let results = await dbRtns.addFavouriteArtwork(album_id, contents, 9004);
+        res.status(200).send({msg: 'Added Artwork!'})
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).send({err:"add song failed - internal server error"});
+    }
+});
+
+
+//get list of favourite songs
+router.get("/getalbumartwork", async(req,res) =>{
+    try{
+        let member_id = req.body.id;
+        let artwork_b64 = await dbRtns.getFavArtwork(member_id);
+        console.log(artwork_b64.rows);
+        res.status(200).send({artwork: artwork_b64.rows});
+    }catch (err) {
+        console.log(err.stack);
+        res.status(500).send({err:"get list failed - internal server error"});
+    }
+});
+
 
 
 module.exports = router;
