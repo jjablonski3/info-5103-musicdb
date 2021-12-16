@@ -297,7 +297,9 @@ module.exports = {
     getFavSongList,
     addFavouriteArtwork,
     getFavArtwork,
-    getAlbumId
+    getAlbumId,
+    getSongFacts,
+    getRecommendedSong
 };
 
 

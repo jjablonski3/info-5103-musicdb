@@ -336,12 +336,6 @@ router.get("/graph", async (req, res) => {
     }
 });
 
-//get user generated song meaning
-
-
-
-
-
 //add favourite song
 router.post("/addfavsong", async(req, res) =>{
     try{
